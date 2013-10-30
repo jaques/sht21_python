@@ -3,10 +3,9 @@ import fcntl
 import time
 
 class SHT21:
-    """Class to read temperature and humidity from SHT21, much of class was derived from:
-    #http://www.sensirion.com/fileadmin/user_upload/customers/sensirion/Dokumente/Humidity/Sensirion_Humidity_SHT21_Datasheet_V3.pdf
-    
-    as well as Martin Steppuhn's code from http://www.emsystech.de/raspi-sht21"""
+    """Class to read temperature and humidity from SHT21, much of class was 
+    derived from: #http://www.sensirion.com/fileadmin/user_upload/customers/sensirion/Dokumente/Humidity/Sensirion_Humidity_SHT21_Datasheet_V3.pdf
+    and Martin Steppuhn's code from http://www.emsystech.de/raspi-sht21"""
 
     #control constants
     _SOFTRESET = 0xFE
@@ -19,8 +18,10 @@ class SHT21:
     I2C_SLAVE_FORCE = 0x0706
 
     def __init__(self, device_number=0):
-        """Opens the i2c device (assuming that it has been enabled in the kernel.
-        Not that this has only been tested on first generation raspberry pi where the device_number = 0"""
+	"""Opens the i2c device (assuming that the kernel modules have been
+	loaded).  Note that this has only been tested on first revision 
+	raspberry pi where the device_number = 0, but it should work 
+	where device_number=1"""
         self.i2c = open('/dev/i2c-%s'%(device_number),'r+',0)
         fcntl.ioctl(self.i2c, self.I2C_SLAVE,0x40)
         self.i2c.write(chr(self._SOFTRESET))
@@ -28,8 +29,8 @@ class SHT21:
 
 
     def read_temperature(self):    
-        """Reads the temperature from the sensor.  Not that this call blocks for 250ms to allow
-        the sensor to return the data"""
+        """Reads the temperature from the sensor.  Not that this call blocks
+	for 250ms to allow the sensor to return the data"""
         self.i2c.write(chr(self._TRIGGER_TEMPERATURE_NO_HOLD))
         time.sleep(0.250)
         data = self.i2c.read(3)
@@ -38,8 +39,8 @@ class SHT21:
         
 
     def read_humidity(self):    
-        """Reads the humidity from the sensor.  Not that this call blocks for 250ms to allow
-        the sensor to return the data"""
+        """Reads the humidity from the sensor.  Not that this call blocks 
+	for 250ms to allow the sensor to return the data"""
         self.i2c.write(chr(self._TRIGGER_HUMIDITY_NO_HOLD))
         time.sleep(0.250)
         data = self.i2c.read(3)
@@ -79,8 +80,8 @@ class SHT21:
 
 
     def _get_temperature_from_buffer(self, data):
-        """This function reads the first two bytes of data and returns the temperature
-        in C by using the following function:
+        """This function reads the first two bytes of data and 
+	returns the temperature in C by using the following function:
         T = =46.82 + (172.72 * (ST/2^16))
         where ST is the value from the sensor
         """
@@ -92,8 +93,8 @@ class SHT21:
 
 
     def _get_humidity_from_buffer(self, data):
-        """This function reads the first two bytes of data and returns the relative humidity
-        in C by using the following function:
+        """This function reads the first two bytes of data and returns 
+	the relative humidity in percent by using the following function:
         RH = -6 + (125 * (SRH / 2 ^16))
         where SRH is the value read from the sensor
         """

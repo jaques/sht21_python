@@ -100,7 +100,7 @@ def _get_humidity_from_buffer(data):
     where SRH is the value read from the sensor
     """
     unadjusted = (ord(data[0]) << 8) + ord(data[1])
-    unadjusted *= 125
+    unadjusted *= 125.0
     unadjusted /= 1 << 16 # divide by 2^16
     unadjusted -= 6
     return unadjusted

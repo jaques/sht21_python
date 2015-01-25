@@ -13,6 +13,7 @@ class SHT21:
     _I2C_ADDRESS = 0x40
     _TRIGGER_TEMPERATURE_NO_HOLD = 0xF3
     _TRIGGER_HUMIDITY_NO_HOLD = 0xF5
+    _STATUS_BITS_MASK = 0xFFFC
 
     #From: /linux/i2c-dev.h
     I2C_SLAVE = 0x0703
@@ -87,6 +88,7 @@ def _get_temperature_from_buffer(data):
     where ST is the value from the sensor
     """
     unadjusted = (ord(data[0]) << 8) + ord(data[1])
+    unadjusted &= SHT21._STATUS_BITS_MASK # zero the status bits
     unadjusted *= 175.72
     unadjusted /= 1 << 16 # divide by 2^16
     unadjusted -= 46.85
@@ -100,6 +102,7 @@ def _get_humidity_from_buffer(data):
     where SRH is the value read from the sensor
     """
     unadjusted = (ord(data[0]) << 8) + ord(data[1])
+    unadjusted &= SHT21._STATUS_BITS_MASK # zero the status bits
     unadjusted *= 125.0
     unadjusted /= 1 << 16 # divide by 2^16
     unadjusted -= 6
@@ -115,6 +118,12 @@ class SHT21Test(unittest.TestCase):
         calc_temp = _get_temperature_from_buffer([chr(99),chr(172)])
         #floating point comparison, not pretty.
         self.failUnless(abs(calc_temp - 21.5653979492) < 0.1)
+
+    def test_humidity(self):
+        """Unit test to check the humidity computation using example
+        from the v4 datasheet"""
+        calc_temp = _get_humidity_from_buffer([chr(99),chr(82)])
+        self.failUnless(abs(calc_temp - 42.4924) < 0.001)
 
     def test_checksum(self):
         """Unit test to check the checksum method.  Uses values read"""

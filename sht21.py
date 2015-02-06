@@ -19,6 +19,12 @@ class SHT21:
     I2C_SLAVE = 0x0703
     I2C_SLAVE_FORCE = 0x0706
 
+    #datasheet (v4), page 9, table 7, thanks to Martin Milata
+    #for suggesting the use of these better values
+    # code copied from https://github.com/mmilata/growd
+    _TEMPERATURE_WAIT_TIME = 0.086 #(datasheet: typ=66, max=85)
+    _HUMIDITY_WAIT_TIME = 0.030    #(datasheet: typ=22, max=29)
+
     def __init__(self, device_number=0):
 	"""Opens the i2c device (assuming that the kernel modules have been
 	loaded).  Note that this has only been tested on first revision 
@@ -32,9 +38,9 @@ class SHT21:
 
     def read_temperature(self):    
         """Reads the temperature from the sensor.  Not that this call blocks
-	for 250ms to allow the sensor to return the data"""
+	for ~86ms to allow the sensor to return the data"""
         self.i2c.write(chr(self._TRIGGER_TEMPERATURE_NO_HOLD))
-        time.sleep(0.250)
+        time.sleep(self._TEMPERATURE_WAIT_TIME)
         data = self.i2c.read(3)
         if _calculate_checksum(data,2) == ord(data[2]):
             return _get_temperature_from_buffer(data)
@@ -42,9 +48,9 @@ class SHT21:
 
     def read_humidity(self):    
         """Reads the humidity from the sensor.  Not that this call blocks 
-	for 250ms to allow the sensor to return the data"""
+	for ~30ms to allow the sensor to return the data"""
         self.i2c.write(chr(self._TRIGGER_HUMIDITY_NO_HOLD))
-        time.sleep(0.250)
+        time.sleep(self._HUMIDITY_WAIT_TIME)
         data = self.i2c.read(3)
         if _calculate_checksum(data,2) == ord(data[2]):
             return _get_humidity_from_buffer(data)    
@@ -66,7 +72,7 @@ class SHT21:
 
         
 def _calculate_checksum(data, nbrOfBytes):
-    """5.7 CRC Checksum using teh polynomial given in the datasheet"""
+    """5.7 CRC Checksum using the polynomial given in the datasheet"""
     # CRC
     POLYNOMIAL = 0x131 # //P(x)=x^8+x^5+x^4+1 = 100110001
     crc = 0

@@ -47,8 +47,8 @@ operation there is single call to do that.
 
 Note that in this example we are using `/dev/i2c-1`.
 
-    import sht21
-    with SHT31(1) as sht31:
+    import sht31
+    with sht31.SHT31(1) as sht31:
         print sht31.check_heater_status()
         sht31.turn_heater_on()
         print sht31.check_heater_status()

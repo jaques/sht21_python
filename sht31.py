@@ -62,9 +62,10 @@ class SHT31:
         """Disables Heater"""
         self.write(self._HEATER_OFF)
 
-    def get_temp_and_humidity(self):
+    def get_temp_and_humidity(self, **kwargs):
         """Reads the temperature and humidity - note that this call blocks
         the program for 15ms"""
+        unit = kwargs.get('unit', 'C')
         self.write(self._TRIGGER)
         time.sleep(self._MEASUREMENT_WAIT_TIME)
         data = self.i2c.read(6)
@@ -74,7 +75,10 @@ class SHT31:
         #  returns a tuple of (temperature, humidity)
         if self._calculate_checksum(temp_data) == temp_checksum and \
            self._calculate_checksum(humidity_data) == humidity_checksum:
-            return self._get_temperature(temp_data), self._get_humidity(humidity_data)
+            if unit == 'C':
+                return self._get_temperature(temp_data), self._get_humidity(humidity_data)
+            else:
+                return self._get_temperature_fahrenheit(temp_data), self._get_humidity(humidity_data)
         else:
             return 0, 0
 
@@ -114,12 +118,24 @@ class SHT31:
     def _get_temperature(unadjusted):
         """This function reads the first two bytes of data and
         returns the temperature in C by using the following function:
-        T = 45 + (175 * (ST/2^16))
+        T = -45 + (175 * (ST/2^16))
         where ST is the value from the sensor
         """
         unadjusted *= 175.0
         unadjusted /= 1 << 16  # divide by 2^16
         unadjusted -= 45
+        return unadjusted
+    
+    @staticmethod
+    def _get_temperature_fahrenheit(unadjusted):
+        """This function reads the first two bytes of data and
+        returns the temperature in C by using the following function:
+        T = -49 + (315 * (ST/2^16))
+        where ST is the value from the sensor
+        """
+        unadjusted *= 315.0
+        unadjusted /= 1 << 16  # divide by 2^16
+        unadjusted -= 49
         return unadjusted
 
     @staticmethod
@@ -144,7 +160,10 @@ if __name__ == "__main__":
             sht31.turn_heater_off()
             print sht31.check_heater_status()
             temperature, humidity = sht31.get_temp_and_humidity()
-            print "Temperature: %s" % temperature
+            print "Temperature C: %s" % temperature
+            print "Humidity: %s" % humidity
+            temperature, humidity = sht31.get_temp_and_humidity(unit = 'F')
+            print "Temperature F: %s" % temperature
             print "Humidity: %s" % humidity
     except IOError, e:
         print e

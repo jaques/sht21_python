@@ -87,7 +87,7 @@ class SHT21:
     def _get_temperature_from_buffer(data):
         """This function reads the first two bytes of data and
         returns the temperature in C by using the following function:
-        T = 46.85 + (175.72 * (ST/2^16))
+        T = -46.85 + (175.72 * (ST/2^16))
         where ST is the value from the sensor
         """
         unadjusted = (ord(data[0]) << 8) + ord(data[1])
